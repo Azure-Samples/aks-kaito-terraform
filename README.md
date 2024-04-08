@@ -64,7 +64,7 @@ The following diagram shows the architecture and network topology deployed by th
 
 ![AKS Architecture](images/architecture.png)
 
-This project provides a set of Terraform modules to deploy thw following resources:
+This project provides a set of Terraform modules to deploy the following resources:
 
 - [Azure Kubernetes Service](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/kubernetes_cluster):  A public or private [Azure Kubernetes Service(AKS)](https://docs.microsoft.com/en-us/azure/aks/intro-kubernetes) cluster composed of a:
   - A `system` node pool in a dedicated subnet. The default node pool hosts only critical system pods and services. The worker nodes have node taint which prevents application pods from beings scheduled on this node pool.
@@ -143,7 +143,7 @@ There are some significant benefits of running open source LLMs with Kaito. Some
 
 ### Models
 
-At the time of this writing, Kaito supports the following models:
+At the time of this writing, Kaito supports the following models.
 
 #### Llama 2
 
@@ -793,7 +793,12 @@ In case you exceeded the quota for the selected instance type, you could see an 
 
 ## Kaito Chat Application
 
-The project provides the code of a chat application using [Python](https://www.python.org/) and [Chainlit](https://docs.chainlit.io/overview) that interacts with the inference endpoint exposed by the AKS-hosted model. As an alternative, the chat application can be configured to call the REST API of an [Azure OpenAI Service](https://learn.microsoft.com/en-us/azure/ai-services/openai/overview). For more information about how to configure the chat application with Azure OpenAI Service, see the following articles:
+The project provides the code of a chat application using [Python](https://www.python.org/) and [Chainlit](https://docs.chainlit.io/overview) that interacts with the inference endpoint exposed by the AKS-hosted model. 
+
+![Kaito Chat UI](./images/kaito-chat-ui.png)
+![Kaito Chat Conversation](./images/kaito-chat-conversation.png)
+
+As an alternative, the chat application can be configured to call the REST API of an [Azure OpenAI Service](https://learn.microsoft.com/en-us/azure/ai-services/openai/overview). For more information about how to configure the chat application with Azure OpenAI Service, see the following articles:
 
 - Create an Azure OpenAI, LangChain, ChromaDB, and Chainlit chat app in AKS using Terraform ([Azure Samples](https://github.com/Azure-Samples/aks-openai-chainlit-terraform))([My GitHub](https://github.com/paolosalvatori/aks-openai-chainlit-terraform))([Tech Community](https://techcommunity.microsoft.com/t5/fasttrack-for-azure/create-an-azure-openai-langchain-chromadb-and-chainlit-chat-app/ba-p/4024070))
 - Deploy an OpenAI, LangChain, ChromaDB, and Chainlit chat app in Azure Container Apps using Terraform ([Azure Samples](https://github.com/Azure-Samples/container-apps-openai))([My GitHub](https://github.com/paolosalvatori/container-apps-openai))([Tech Community](https://techcommunity.microsoft.com/t5/fasttrack-for-azure/deploy-an-openai-langchain-chromadb-and-chainlit-chat-app-in/ba-p/3885602))
@@ -1206,8 +1211,6 @@ You can use the `08-deploy-chat.sh` script to deploy the application to AKS.
 
 ```bash
 #!/bin/bash
-
-# For more information, see https://azure.github.io/azure-workload-identity/docs/quick-start.html
 
 # Variables
 source ./00-variables.sh
