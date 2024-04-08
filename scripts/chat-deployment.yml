@@ -1,0 +1,143 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kaito-chat
+  labels:
+    app: kaito-chat
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: kaito-chat
+      azure.workload.identity/use: "true"
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  minReadySeconds: 5
+  template:
+    metadata:
+      labels:
+        app: kaito-chat
+        azure.workload.identity/use: "true"
+        prometheus.io/scrape: "true"
+    spec:
+      serviceAccountName: chainlit-sa
+      topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: topology.kubernetes.io/zone
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels:
+            app: kaito-chat
+      - maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels:
+            app: kaito-chat
+      nodeSelector:
+        "kubernetes.io/os": linux
+      containers:
+      - name: kaito-chat
+        image: contoso.azurecr.io/kaitochat:v1
+        imagePullPolicy: Always
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "250m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 8000
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8000
+          failureThreshold: 1
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8000
+          failureThreshold: 1
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 5
+        startupProbe:
+          httpGet:
+            path: /
+            port: 8000
+          failureThreshold: 1
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 5
+        env:
+        - name: TEMPERATURE
+          valueFrom:
+            configMapKeyRef:
+                name: kaito-chat
+                key: TEMPERATURE
+        - name: AZURE_OPENAI_TYPE
+          valueFrom:
+            configMapKeyRef:
+                name: kaito-chat
+                key: AZURE_OPENAI_TYPE
+        - name: AZURE_OPENAI_BASE
+          valueFrom:
+            configMapKeyRef:
+                name: kaito-chat
+                key: AZURE_OPENAI_BASE
+        - name: AZURE_OPENAI_KEY
+          valueFrom:
+            configMapKeyRef:
+                name: kaito-chat
+                key: AZURE_OPENAI_KEY
+        - name: AZURE_OPENAI_VERSION
+          valueFrom:
+            configMapKeyRef:
+                name: kaito-chat
+                key: AZURE_OPENAI_VERSION
+        - name: AZURE_OPENAI_DEPLOYMENT
+          valueFrom:
+            configMapKeyRef:
+                name: kaito-chat
+                key: AZURE_OPENAI_DEPLOYMENT
+        - name: AZURE_OPENAI_MODEL
+          valueFrom:
+            configMapKeyRef:
+                name: kaito-chat
+                key: AZURE_OPENAI_MODEL
+        - name: AZURE_OPENAI_SYSTEM_MESSAGE
+          valueFrom:
+            configMapKeyRef:
+                name: kaito-chat
+                key: AZURE_OPENAI_SYSTEM_MESSAGE
+        - name: USE_LOCAL_LLM
+          valueFrom:
+            configMapKeyRef:
+                name: kaito-chat
+                key: USE_LOCAL_LLM
+        - name: AI_ENDPOINT
+          valueFrom:
+            configMapKeyRef:
+                name: kaito-chat
+                key: AI_ENDPOINT
+        - name: MAX_RETRIES
+          valueFrom:
+            configMapKeyRef:
+                name: kaito-chat
+                key: MAX_RETRIES
+        - name: TIMEOUT
+          valueFrom:
+            configMapKeyRef:
+                name: kaito-chat
+                key: TIMEOUT
+        - name: DEBUG
+          valueFrom:
+            configMapKeyRef:
+                name: kaito-chat
+                key: DEBUG

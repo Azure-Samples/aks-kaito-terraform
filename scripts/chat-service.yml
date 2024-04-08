@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: kaito-chat
+  labels:
+    app: kaito-chat
+spec:
+  type: ClusterIP
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8000
+    name: http
+  selector:
+    app: kaito-chat
