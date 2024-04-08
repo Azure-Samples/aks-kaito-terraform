@@ -1,0 +1,18 @@
+{
+  "python.languageServer": "Pylance",
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter",
+    "editor.codeActionsOnSave": {
+      "source.fixAll": "always",
+      "source.organizeImports": "always",
+    },
+    "editor.insertSpaces": true,
+    "editor.formatOnSave": false,
+    "editor.tabSize": 4,
+    "editor.formatOnType": false,
+  },
+  "python.analysis.typeCheckingMode": "off",
+  "python.analysis.extraPaths": [],
+  "editor.defaultFoldingRangeProvider": "ms-python.black-formatter",
+  "editor.defaultFormatter": "ms-python.black-formatter"
+}
