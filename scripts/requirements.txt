@@ -515,7 +515,7 @@ tomli==2.0.1
     # via
     #   -r requirements.in
     #   chainlit
-tqdm==4.66.1
+tqdm==4.66.3
     # via
     #   -r requirements.in
     #   huggingface-hub
