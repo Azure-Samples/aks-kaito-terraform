@@ -442,7 +442,7 @@ regex==2023.10.3
     # via
     #   -r requirements.in
     #   tiktoken
-requests==2.31.0
+requests==2.32.0
     # via
     #   -r requirements.in
     #   auth0-python
