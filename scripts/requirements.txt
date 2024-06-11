@@ -53,7 +53,7 @@ azure-core==1.29.6
     # via
     #   -r requirements.in
     #   azure-identity
-azure-identity==1.15.0
+azure-identity==1.16.1
     # via -r requirements.in
 backoff==2.2.1
     # via
