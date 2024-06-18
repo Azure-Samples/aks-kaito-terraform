@@ -548,7 +548,7 @@ uptrace==1.22.0
     # via
     #   -r requirements.in
     #   chainlit
-urllib3==1.26.18
+urllib3==1.26.19
     # via
     #   -r requirements.in
     #   kubernetes
