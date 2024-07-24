@@ -222,7 +222,7 @@ kubernetes==28.1.0
     # via -r requirements.in
 langchain==0.0.351
     # via -r requirements.in
-langchain-community==0.0.4
+langchain-community==0.2.9
     # via
     #   -r requirements.in
     #   langchain
