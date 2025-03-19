@@ -261,7 +261,7 @@ resource "azapi_update_resource" "enable_kaito" {
   depends_on = [
     module.node_pool,
     module.aks_extensions
-    ]
+  ]
 }
 
 data "azurerm_user_assigned_identity" "kaito_identity" {
