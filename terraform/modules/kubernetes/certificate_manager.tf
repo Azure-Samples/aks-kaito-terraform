@@ -5,6 +5,10 @@ resource "helm_release" "cert_manager" {
   namespace        = "cert-manager"
   create_namespace = true
 
+  values = [
+    "${file("${path.module}/yaml/cert-manager-values.yaml")}"
+  ]
+
   set {
     name  = "installCRDs"
     value = "true"

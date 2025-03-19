@@ -2,6 +2,7 @@ resource "azurerm_dashboard_grafana" "grafana" {
   name                                   = var.name
   resource_group_name                    = var.resource_group_name
   location                               = var.location
+  grafana_major_version                  = var.grafana_major_version
   api_key_enabled                        = var.api_key_enabled
   auto_generated_domain_name_label_scope = var.auto_generated_domain_name_label_scope
   deterministic_outbound_ip_enabled      = var.deterministic_outbound_ip_enabled

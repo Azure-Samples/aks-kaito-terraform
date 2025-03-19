@@ -30,6 +30,29 @@ variable "workload_managed_identity_client_id" {
   type        = string
 }
 
+variable "certificate_manager_managed_identity_client_id" {
+  description = "(Required) Specifies the client id of the cert-manager user-defined managed identity."
+  type        = string
+}
+
+variable "dns_zone_name" {
+  description = "Specifies the name of the DNS zone."
+  type        = string
+  default     = null
+}
+
+variable "dns_zone_resource_group_name" {
+  description = "Specifies the name of the resource group that contains the DNS zone."
+  type        = string
+  default     = null
+}
+
+variable "dns_zone_subscription_id" {
+  description = "Specifies the subscription id of the DNS zone."
+  type        = string
+  default     = null
+}
+
 variable "email" {
   description = "(Required) Specifies the email address for the cert-manager cluster issuer."
   type        = string

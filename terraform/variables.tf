@@ -129,13 +129,24 @@ variable "role_based_access_control_enabled" {
   type        = bool
 }
 
-variable "automatic_channel_upgrade" {
-  description = "(Optional) The upgrade channel for this Kubernetes Cluster. Possible values are patch, rapid, and stable."
-  default     = "stable"
+variable "automatic_upgrade_channel" {
+  description = "(Optional) The upgrade channel for this Kubernetes Cluster. Possible values are patch, rapid, node-image and stable. Omitting this field sets this value to none."
+  default     = "patch"
   type        = string
 
   validation {
-    condition     = contains(["patch", "rapid", "stable"], var.automatic_channel_upgrade)
+    condition     = contains(["patch", "rapid", "stable", "node-image"], var.automatic_upgrade_channel)
+    error_message = "The upgrade mode is invalid."
+  }
+}
+
+variable "node_os_upgrade_channel" {
+  description = "(Optional) The upgrade channel for this Kubernetes Cluster Nodes' OS Image. Possible values are Unmanaged, SecurityPatch, NodeImage and None. Defaults to NodeImage."
+  default     = "NodeImage"
+  type        = string
+
+  validation {
+    condition     = contains(["Unmanaged", "SecurityPatch", "NodeImage"], var.node_os_upgrade_channel)
     error_message = "The upgrade mode is invalid."
   }
 }
@@ -153,12 +164,12 @@ variable "azure_rbac_enabled" {
 }
 
 variable "sku_tier" {
-  description = "(Optional) The SKU Tier that should be used for this Kubernetes Cluster. Possible values are Free and Paid (which includes the Uptime SLA). Defaults to Free."
+  description = "(Optional) The SKU Tier that should be used for this Kubernetes Cluster. Possible values are Free, Standard (which includes the Uptime SLA) and Premium. Defaults to Free."
   default     = "Free"
   type        = string
 
   validation {
-    condition     = contains(["Free", "Paid"], var.sku_tier)
+    condition     = contains(["Free", "Standard", "Premium"], var.sku_tier)
     error_message = "The sku tier is invalid."
   }
 }
@@ -194,7 +205,7 @@ variable "service_cidr" {
 
 variable "pod_cidr" {
   description = "Specifies the service CIDR"
-  default     = "172.0.0.0/16"
+  default     = "192.168.0.0/16"
   type        = string
 }
 
@@ -262,19 +273,19 @@ variable "system_node_pool_name" {
   type        = string
 }
 
-variable "system_node_pool_enable_auto_scaling" {
+variable "system_node_pool_auto_scaling_enabled" {
   description = "(Optional) Whether to enable auto-scaler. Defaults to false."
   type        = bool
   default     = true
 }
 
-variable "system_node_pool_enable_host_encryption" {
+variable "system_node_pool_host_encryption_enabled" {
   description = "(Optional) Should the nodes in this Node Pool have host encryption enabled? Defaults to false."
   type        = bool
   default     = false
 }
 
-variable "system_node_pool_enable_node_public_ip" {
+variable "system_node_pool_node_public_ip_enabled" {
   description = "(Optional) Should each node have a Public IP Address? Defaults to false. Changing this forces a new resource to be created."
   type        = bool
   default     = false
@@ -340,19 +351,19 @@ variable "user_node_pool_availability_zones" {
   default     = ["1", "2", "3"]
 }
 
-variable "user_node_pool_enable_auto_scaling" {
+variable "user_node_pool_auto_scaling_enabled" {
   description = "(Optional) Whether to enable auto-scaler. Defaults to false."
   type        = bool
   default     = true
 }
 
-variable "user_node_pool_enable_host_encryption" {
+variable "user_node_pool_host_encryption_enabled" {
   description = "(Optional) Should the nodes in this Node Pool have host encryption enabled? Defaults to false."
   type        = bool
   default     = false
 }
 
-variable "user_node_pool_enable_node_public_ip" {
+variable "user_node_pool_node_public_ip_enabled" {
   description = "(Optional) Should each node have a Public IP Address? Defaults to false. Changing this forces a new resource to be created."
   type        = bool
   default     = false
@@ -436,7 +447,7 @@ variable "vm_public_ip" {
   default     = false
 }
 
-variable "vm_enable_accelerated_networking" {
+variable "vm_accelerated_networking_enabled" {
   description = "Specifies whether enable accelerated networking"
   type        = bool
   default     = true
@@ -490,6 +501,36 @@ variable "storage_account_tier" {
     condition     = contains(["Standard", "Premium"], var.storage_account_tier)
     error_message = "The account tier of the storage account is invalid."
   }
+}
+
+variable "storage_account_shared_access_key_enabled" {
+  description = "(Optional) Indicates whether the storage account permits requests to be authorized with the account access key via Shared Key. If false, then all requests, including shared access signatures, must be authorized with Azure Active Directory (Azure AD). Defaults to true."
+  default     = true
+  type        = bool
+}
+
+variable "storage_account_virtual_network_subnet_ids" {
+  description = "Specifies a list of resource ids for subnets"
+  default     = []
+  type        = list(string)
+}
+
+variable "storage_account_ip_rules" {
+  description = "Specifies IP rules for the Azure Storage Account"
+  default     = []
+  type        = list(string)
+}
+
+variable "storage_account_bypass" {
+  description = " (Optional) Specifies whether traffic is bypassed for Logging/Metrics/AzureServices. Valid options are any combination of Logging, Metrics, AzureServices, or None."
+  default     = ["Logging", "Metrics", "AzureServices"]
+  type        = set(string)
+}
+
+variable "storage_account_default_action" {
+  description = "Allow or disallow public access to all blobs or containers in the Azure Storage Accounts. The default interpretation is true for this property."
+  default     = "Allow"
+  type        = string
 }
 
 variable "acr_name" {
@@ -679,6 +720,12 @@ variable "azure_policy_enabled" {
   default     = true
 }
 
+variable "cost_analysis_enabled" {
+  description = "(Optional) Should cost analysis be enabled for this Kubernetes Cluster? Defaults to false. The sku_tier must be set to Standard or Premium to enable this feature. Enabling this will add Kubernetes Namespace and Deployment details to the Cost Analysis views in the Azure portal."
+  type        = bool
+  default     = false
+}
+
 variable "http_application_routing_enabled" {
   description = "(Optional) Should HTTP Application Routing be enabled?"
   type        = bool
@@ -716,6 +763,12 @@ variable "openai_public_network_access_enabled" {
   default     = true
 }
 
+variable "openai_local_auth_enabled" {
+  description = "(Optional) Whether local authentication methods is enabled for the Cognitive Account. Defaults to true."
+  type        = bool
+  default     = true
+}
+
 variable "openai_deployments" {
   description = "(Optional) Specifies the deployments of the Azure OpenAI Service"
   type = list(object({
@@ -723,6 +776,7 @@ variable "openai_deployments" {
     model = object({
       name    = string
       version = string
+      sku     = string
     })
   }))
   default = []
@@ -758,6 +812,12 @@ variable "workload_managed_identity_name" {
   default     = "WorkloadManagedIdentity"
 }
 
+variable "certificate_manager_managed_identity_name" {
+  description = "(Required) Specifies the name of the cert-manager user-defined managed identity."
+  type        = string
+  default     = "CertificateManagerManagedIdentity"
+}
+
 variable "subdomain" {
   description = "Specifies the subdomain of the Kubernetes ingress object."
   type        = string
@@ -785,7 +845,31 @@ variable "service_account_name" {
 variable "email" {
   description = "Specifies the email address for the cert-manager cluster issuer."
   type        = string
-  default     = "admin@contoso.com"
+  default     = "paolos@microsoft.com"
+}
+
+variable "deployment_script_name" {
+  description = "(Required) Specifies the name of the Azure OpenAI Service"
+  type        = string
+  default     = "BashScript"
+}
+
+variable "deployment_script_azure_cli_version" {
+  description = "(Required) Azure CLI module version to be used."
+  type        = string
+  default     = "2.9.1"
+}
+
+variable "deployment_script_managed_identity_name" {
+  description = "Specifies the name of the user-defined managed identity used by the deployment script."
+  type        = string
+  default     = "ScriptManagedIdentity"
+}
+
+variable "deployment_script_primary_script_uri" {
+  description = "(Optional) Uri for the script. This is the entry point for the external script. Changing this forces a new Resource Deployment Script to be created."
+  type        = string
+  default     = "https://paolosalvatori.blob.core.windows.net/scripts/install-packages-for-chainlit-demo.sh"
 }
 
 variable "dns_zone_name" {
@@ -804,6 +888,20 @@ variable "web_app_routing_enabled" {
   description = "(Optional) Should Web App Routing be enabled?"
   type        = bool
   default     = false
+}
+
+variable "key_vault_secrets_provider" {
+  description = "Specifies the Azure Key Kault Secrets CSI Driver configuration."
+  type = object({
+    enabled                  = bool
+    secret_rotation_enabled  = bool
+    secret_rotation_interval = string
+  })
+  default = {
+    enabled                  = true
+    secret_rotation_enabled  = true
+    secret_rotation_interval = "2m"
+  }
 }
 
 variable "prometheus_name" {
@@ -858,4 +956,34 @@ variable "instance_type" {
   description = "(Optional) Specifies the GPU node SKU. This field defaults to Standard_NC12s_v3 if not specified."
   type        = string
   default     = "Standard_NC12s_v3"
+}
+
+variable "dapr_enabled" {
+  description = "(Optional) Should DAPR extension be enabled?"
+  type        = bool
+  default     = false
+}
+
+variable "flux_enabled" {
+  description = "(Optional) Should FLUX extension be enabled?"
+  type        = bool
+  default     = false
+}
+
+variable "flux_url" {
+  description = "(Optional) Specifies the URL of the Git repository containing the Flux configuration."
+  type        = string
+  default     = null
+}
+
+variable "flux_branch" {
+  description = "(Optional) Specifies the branch of the Git repository containing the Flux configuration."
+  type        = string
+  default     = null
+}
+
+variable "flux_kustomization_path" {
+  description = "(Optional) Specifies the path of the Git repository containing the Kustomization configuration."
+  type        = string
+  default     = null
 }

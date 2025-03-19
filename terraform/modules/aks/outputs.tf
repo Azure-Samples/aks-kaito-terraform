@@ -97,3 +97,17 @@ output "cluster_ca_certificate" {
   value       = try(azurerm_kubernetes_cluster.aks_cluster.kube_admin_config[0].cluster_ca_certificate, "")
 }
 
+output "web_app_routing_identity_object_id" {
+  value       = var.web_app_routing.enabled ? azurerm_kubernetes_cluster.aks_cluster.web_app_routing.0.web_app_routing_identity.0.object_id : ""
+  description = "Specifies the object id of the web app routing managed identity of the AKS cluster."
+}
+
+output "key_vault_secrets_provider_identity_object_id" {
+  value       = var.key_vault_secrets_provider.enabled ? azurerm_kubernetes_cluster.aks_cluster.key_vault_secrets_provider.0.secret_identity.0.object_id : ""
+  description = "Specifies the object id of the Azure Key Vault CSI Driver identity of the AKS cluster."
+}
+
+output "kubelet_web_app_routing_identity_object_id" {
+  value       = var.web_app_routing.enabled ? azurerm_kubernetes_cluster.aks_cluster.web_app_routing.0.web_app_routing_identity.0.object_id : ""
+  description = "Specifies the object id of the web app routing managed identity of the AKS cluster."
+}

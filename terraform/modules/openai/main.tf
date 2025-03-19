@@ -6,6 +6,7 @@ resource "azurerm_cognitive_account" "openai" {
   custom_subdomain_name         = var.custom_subdomain_name
   sku_name                      = var.sku_name
   public_network_access_enabled = var.public_network_access_enabled
+  local_auth_enabled            = var.local_auth_enabled
   tags                          = var.tags
 
   identity {
@@ -31,13 +32,13 @@ resource "azurerm_cognitive_deployment" "deployment" {
     version = each.value.model.version
   }
 
-  scale {
-    type = "Standard"
+  sku {
+    name = each.value.model.sku
   }
 
   lifecycle {
     ignore_changes = [
-      scale,
+      sku,
       rai_policy_name
     ]
   }

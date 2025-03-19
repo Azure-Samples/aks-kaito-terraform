@@ -75,6 +75,18 @@ variable "kind" {
   default     = ""
 }
 
+variable "bypass" {
+  description = " (Optional) Specifies whether traffic is bypassed for Logging/Metrics/AzureServices. Valid options are any combination of Logging, Metrics, AzureServices, or None."
+  default     = ["Logging", "Metrics", "AzureServices"]
+  type        = set(string)
+}
+
+variable "shared_access_key_enabled" {
+  description = "(Optional) Indicates whether the storage account permits requests to be authorized with the account access key via Shared Key. If false, then all requests, including shared access signatures, must be authorized with Azure Active Directory (Azure AD). Defaults to true."
+  default     = true
+  type        = bool
+}
+
 variable "tags" {
   description = "(Optional) Specifies the tags of the Azure Storage Account"
   default     = {}
