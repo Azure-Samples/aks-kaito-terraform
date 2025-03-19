@@ -13,6 +13,12 @@ variable "location" {
   type        = string
 }
 
+variable "grafana_major_version" {
+  description = "(Required) Which major version of Grafana to deploy. Possible values are 9, 10. Changing this forces a new resource to be created."
+  type        = string
+  default     = "10"
+}
+
 variable "api_key_enabled" {
   description = "(Optional) Specifies whether to enable the API key setting of the Azure Managed Grafana resource. Defaults to false"
   type        = bool

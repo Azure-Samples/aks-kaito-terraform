@@ -36,6 +36,12 @@ variable "public_network_access_enabled" {
   default     = true
 }
 
+variable "local_auth_enabled" {
+  description = "(Optional) Whether local authentication methods is enabled for the Cognitive Account. Defaults to true."
+  type        = bool
+  default     = true
+}
+
 variable "deployments" {
   description = "(Optional) Specifies the deployments of the Azure OpenAI Service"
   type = list(object({
@@ -43,6 +49,7 @@ variable "deployments" {
     model = object({
       name    = string
       version = string
+      sku     = string
     })
   }))
   default = []

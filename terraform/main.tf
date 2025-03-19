@@ -56,42 +56,42 @@ module "virtual_network" {
     {
       name : var.system_node_pool_subnet_name
       address_prefixes : var.system_node_pool_subnet_address_prefix
-      private_endpoint_network_policies_enabled : true
+      private_endpoint_network_policies : "Enabled"
       private_link_service_network_policies_enabled : false
       delegation : null
     },
     {
       name : var.user_node_pool_subnet_name
       address_prefixes : var.user_node_pool_subnet_address_prefix
-      private_endpoint_network_policies_enabled : true
+      private_endpoint_network_policies : "Enabled"
       private_link_service_network_policies_enabled : false
       delegation : null
     },
     lower(var.network_plugin_mode) != "overlay" ? {
       name : var.pod_subnet_name
       address_prefixes : var.pod_subnet_address_prefix
-      private_endpoint_network_policies_enabled : true
+      private_endpoint_network_policies : "Enabled"
       private_link_service_network_policies_enabled : false
       delegation : "Microsoft.ContainerService/managedClusters"
     } : null,
     {
       name : var.api_server_subnet_name
       address_prefixes : var.api_server_subnet_address_prefix
-      private_endpoint_network_policies_enabled : true
+      private_endpoint_network_policies : "Enabled"
       private_link_service_network_policies_enabled : false
       delegation : "Microsoft.ContainerService/managedClusters"
     },
     {
       name : "AzureBastionSubnet"
       address_prefixes : var.bastion_subnet_address_prefix
-      private_endpoint_network_policies_enabled : true
+      private_endpoint_network_policies : "Enabled"
       private_link_service_network_policies_enabled : false
       delegation : null
     },
     {
       name : var.vm_subnet_name
       address_prefixes : var.vm_subnet_address_prefix
-      private_endpoint_network_policies_enabled : true
+      private_endpoint_network_policies : "Enabled"
       private_link_service_network_policies_enabled : false
       delegation : null
     }
@@ -132,7 +132,8 @@ module "aks_cluster" {
   kubernetes_version                            = var.kubernetes_version
   dns_prefix                                    = lower(local.cluster_name)
   private_cluster_enabled                       = var.private_cluster_enabled
-  automatic_channel_upgrade                     = var.automatic_channel_upgrade
+  automatic_upgrade_channel                     = var.automatic_upgrade_channel
+  node_os_upgrade_channel                       = var.node_os_upgrade_channel
   sku_tier                                      = var.sku_tier
   system_node_pool_name                         = var.system_node_pool_name
   system_node_pool_vm_size                      = var.system_node_pool_vm_size
@@ -142,9 +143,9 @@ module "aks_cluster" {
   system_node_pool_availability_zones           = var.system_node_pool_availability_zones
   system_node_pool_node_labels                  = var.system_node_pool_node_labels
   system_node_pool_only_critical_addons_enabled = var.system_node_pool_only_critical_addons_enabled
-  system_node_pool_enable_auto_scaling          = var.system_node_pool_enable_auto_scaling
-  system_node_pool_enable_host_encryption       = var.system_node_pool_enable_host_encryption
-  system_node_pool_enable_node_public_ip        = var.system_node_pool_enable_node_public_ip
+  system_node_pool_auto_scaling_enabled         = var.system_node_pool_auto_scaling_enabled
+  system_node_pool_host_encryption_enabled      = var.system_node_pool_host_encryption_enabled
+  system_node_pool_node_public_ip_enabled       = var.system_node_pool_node_public_ip_enabled
   system_node_pool_max_pods                     = var.system_node_pool_max_pods
   system_node_pool_max_count                    = var.system_node_pool_max_count
   system_node_pool_min_count                    = var.system_node_pool_min_count
@@ -174,16 +175,20 @@ module "aks_cluster" {
   image_cleaner_enabled                         = var.image_cleaner_enabled
   image_cleaner_interval_hours                  = var.image_cleaner_interval_hours
   azure_policy_enabled                          = var.azure_policy_enabled
+  cost_analysis_enabled                         = var.cost_analysis_enabled
   http_application_routing_enabled              = var.http_application_routing_enabled
   annotations_allowed                           = var.annotations_allowed
   labels_allowed                                = var.labels_allowed
   authorized_ip_ranges                          = var.authorized_ip_ranges
   vnet_integration_enabled                      = var.vnet_integration_enabled
+  key_vault_secrets_provider                    = var.key_vault_secrets_provider
+  kaito_enabled                                 = var.kaito_enabled
+
   web_app_routing = {
-    enabled     = true
-    dns_zone_id = length(data.azurerm_dns_zone.dns_zone) > 0 ? element(data.azurerm_dns_zone.dns_zone[*].id, 0) : ""
+    enabled      = true
+    dns_zone_ids = length(data.azurerm_dns_zone.dns_zone) > 0 ? [element(data.azurerm_dns_zone.dns_zone[*].id, 0)] : []
   }
-  kaito_enabled = var.kaito_enabled
+
 
   depends_on = [
     module.nat_gateway,
@@ -192,30 +197,44 @@ module "aks_cluster" {
 }
 
 module "node_pool" {
-  source                 = "./modules/node_pool"
-  resource_group_name    = azurerm_resource_group.rg.name
-  kubernetes_cluster_id  = module.aks_cluster.id
-  name                   = var.user_node_pool_name
-  vm_size                = var.user_node_pool_vm_size
-  mode                   = var.user_node_pool_mode
-  node_labels            = var.user_node_pool_node_labels
-  node_taints            = var.user_node_pool_node_taints
-  availability_zones     = var.user_node_pool_availability_zones
-  vnet_subnet_id         = module.virtual_network.subnet_ids[var.user_node_pool_subnet_name]
-  pod_subnet_id          = lower(var.network_plugin_mode) != "overlay" ? module.virtual_network.subnet_ids[var.pod_subnet_name] : null
-  enable_auto_scaling    = var.user_node_pool_enable_auto_scaling
-  enable_host_encryption = var.user_node_pool_enable_host_encryption
-  enable_node_public_ip  = var.user_node_pool_enable_node_public_ip
-  orchestrator_version   = var.kubernetes_version
-  max_pods               = var.user_node_pool_max_pods
-  max_count              = var.user_node_pool_max_count
-  min_count              = var.user_node_pool_min_count
-  node_count             = var.user_node_pool_node_count
-  os_type                = var.user_node_pool_os_type
-  priority               = var.user_node_pool_priority
-  tags                   = var.tags
+  source                  = "./modules/node_pool"
+  resource_group_name     = azurerm_resource_group.rg.name
+  kubernetes_cluster_id   = module.aks_cluster.id
+  name                    = var.user_node_pool_name
+  vm_size                 = var.user_node_pool_vm_size
+  mode                    = var.user_node_pool_mode
+  node_labels             = var.user_node_pool_node_labels
+  node_taints             = var.user_node_pool_node_taints
+  availability_zones      = var.user_node_pool_availability_zones
+  vnet_subnet_id          = module.virtual_network.subnet_ids[var.user_node_pool_subnet_name]
+  pod_subnet_id           = lower(var.network_plugin_mode) != "overlay" ? module.virtual_network.subnet_ids[var.pod_subnet_name] : null
+  auto_scaling_enabled    = var.user_node_pool_auto_scaling_enabled
+  host_encryption_enabled = var.user_node_pool_host_encryption_enabled
+  node_public_ip_enabled  = var.user_node_pool_node_public_ip_enabled
+  orchestrator_version    = var.kubernetes_version
+  max_pods                = var.user_node_pool_max_pods
+  max_count               = var.user_node_pool_max_count
+  min_count               = var.user_node_pool_min_count
+  node_count              = var.user_node_pool_node_count
+  os_type                 = var.user_node_pool_os_type
+  priority                = var.user_node_pool_priority
+  tags                    = var.tags
 
   depends_on = [module.aks_cluster
+  ]
+}
+
+module "aks_extensions" {
+  source       = "./modules/aks_extensions"
+  cluster_id   = module.aks_cluster.id
+  dapr_enabled = var.dapr_enabled
+  flux_enabled = var.flux_enabled
+  flux_url     = var.flux_url
+  flux_branch  = var.flux_branch
+
+  depends_on = [
+    module.aks_cluster,
+    module.node_pool
   ]
 }
 
@@ -239,7 +258,10 @@ resource "azapi_update_resource" "enable_kaito" {
     }
   })
 
-  depends_on = [module.node_pool]
+  depends_on = [
+    module.node_pool,
+    module.aks_extensions
+    ]
 }
 
 data "azurerm_user_assigned_identity" "kaito_identity" {
@@ -274,40 +296,6 @@ resource "azurerm_role_assignment" "kaito_identity_contributor_assignment" {
   depends_on = [azurerm_federated_identity_credential.kaito_federated_identity_credential]
 }
 
-module "kubernetes" {
-  source                              = "./modules/kubernetes"
-  host                                = module.aks_cluster.host
-  username                            = module.aks_cluster.username
-  password                            = module.aks_cluster.password
-  client_key                          = module.aks_cluster.client_key
-  client_certificate                  = module.aks_cluster.client_certificate
-  cluster_ca_certificate              = module.aks_cluster.cluster_ca_certificate
-  namespace                           = var.namespace
-  service_account_name                = var.service_account_name
-  email                               = var.email
-  tenant_id                           = data.azurerm_client_config.current.tenant_id
-  workload_managed_identity_client_id = azurerm_user_assigned_identity.aks_workload_identity.client_id
-  nginx_replica_count                 = 3
-  kaito_enabled                       = var.kaito_enabled
-  instance_type                       = var.instance_type
-  grafana_id                          = module.grafana.id
-  grafana_tags                        = module.grafana.tags
-}
-
-module "openai" {
-  count                         = var.openai_enabled ? 1 : 0
-  source                        = "./modules/openai"
-  name                          = var.name_prefix == null ? "${random_string.prefix.result}${var.openai_name}" : "${var.name_prefix}${var.openai_name}"
-  location                      = var.location
-  resource_group_name           = azurerm_resource_group.rg.name
-  sku_name                      = var.openai_sku_name
-  tags                          = var.tags
-  deployments                   = var.openai_deployments
-  custom_subdomain_name         = var.openai_custom_subdomain_name == "" || var.openai_custom_subdomain_name == null ? var.name_prefix == null ? lower("${random_string.prefix.result}${var.openai_name}") : lower("${var.name_prefix}${var.openai_name}") : lower(var.openai_custom_subdomain_name)
-  public_network_access_enabled = var.openai_public_network_access_enabled
-  log_analytics_workspace_id    = module.log_analytics_workspace.id
-}
-
 resource "azurerm_user_assigned_identity" "aks_workload_identity" {
   name                = var.name_prefix == null ? "${random_string.prefix.result}${var.workload_managed_identity_name}" : "${var.name_prefix}${var.workload_managed_identity_name}"
   resource_group_name = azurerm_resource_group.rg.name
@@ -319,6 +307,53 @@ resource "azurerm_user_assigned_identity" "aks_workload_identity" {
       tags
     ]
   }
+}
+
+resource "azurerm_user_assigned_identity" "certificate_manager_identity" {
+  count               = var.dns_zone_name != null && var.dns_zone_resource_group_name != null ? 1 : 0
+  name                = var.name_prefix == null ? "${random_string.prefix.result}${var.certificate_manager_managed_identity_name}" : "${var.name_prefix}${var.certificate_manager_managed_identity_name}"
+  resource_group_name = azurerm_resource_group.rg.name
+  location            = var.location
+  tags                = var.tags
+
+  lifecycle {
+    ignore_changes = [
+      tags
+    ]
+  }
+}
+
+resource "azurerm_role_assignment" "dns_zone_contributor_user_assignment" {
+  count                            = var.dns_zone_name != null && var.dns_zone_resource_group_name != null ? 1 : 0
+  scope                            = data.azurerm_dns_zone.dns_zone.0.id
+  role_definition_name             = "DNS Zone Contributor"
+  principal_id                     = azurerm_user_assigned_identity.certificate_manager_identity.0.principal_id
+  skip_service_principal_aad_check = true
+}
+
+resource "azurerm_role_assignment" "web_app_routing_identity_dns_zone_contributor_assignment" {
+  count                            = var.dns_zone_name != null && var.dns_zone_resource_group_name != null ? 1 : 0
+  scope                            = data.azurerm_dns_zone.dns_zone.0.id
+  role_definition_name             = "DNS Zone Contributor"
+  principal_id                     = module.aks_cluster.web_app_routing_identity_object_id
+  skip_service_principal_aad_check = true
+
+  depends_on = [
+    module.aks_cluster
+  ]
+}
+
+resource "azurerm_role_assignment" "key_vault_administrator_assignment" {
+  count                            = var.key_vault_secrets_provider.enabled ? 1 : 0
+  scope                            = module.key_vault.id
+  role_definition_name             = "Key Vault Administrator"
+  principal_id                     = module.aks_cluster.key_vault_secrets_provider_identity_object_id
+  skip_service_principal_aad_check = true
+
+  depends_on = [
+    module.aks_cluster,
+    module.key_vault
+  ]
 }
 
 resource "azurerm_role_assignment" "cognitive_services_user_assignment" {
@@ -338,6 +373,16 @@ resource "azurerm_federated_identity_credential" "workload_federated_identity_cr
   subject             = "system:serviceaccount:${var.namespace}:${var.service_account_name}"
 }
 
+resource "azurerm_federated_identity_credential" "certificate_manager_federated_identity_credential" {
+  count               = var.dns_zone_name != null && var.dns_zone_resource_group_name != null ? 1 : 0
+  name                = "${title(var.certificate_manager_managed_identity_name)}FederatedIdentity"
+  resource_group_name = azurerm_resource_group.rg.name
+  audience            = ["api://AzureADTokenExchange"]
+  issuer              = module.aks_cluster.oidc_issuer_url
+  parent_id           = azurerm_user_assigned_identity.certificate_manager_identity.0.id
+  subject             = "system:serviceaccount:cert-manager:cert-manager"
+}
+
 resource "azurerm_role_assignment" "network_contributor_assignment" {
   scope                            = azurerm_resource_group.rg.id
   role_definition_name             = "Network Contributor"
@@ -352,16 +397,59 @@ resource "azurerm_role_assignment" "acr_pull_assignment" {
   skip_service_principal_aad_check = true
 }
 
-module "storage_account" {
-  source              = "./modules/storage_account"
-  name                = "${local.storage_account_prefix}${random_string.storage_account_suffix.result}"
-  location            = var.location
-  resource_group_name = azurerm_resource_group.rg.name
-  account_kind        = var.storage_account_kind
-  account_tier        = var.storage_account_tier
-  replication_type    = var.storage_account_replication_type
-  tags                = var.tags
+module "kubernetes" {
+  source                                         = "./modules/kubernetes"
+  host                                           = module.aks_cluster.host
+  username                                       = module.aks_cluster.username
+  password                                       = module.aks_cluster.password
+  client_key                                     = module.aks_cluster.client_key
+  client_certificate                             = module.aks_cluster.client_certificate
+  cluster_ca_certificate                         = module.aks_cluster.cluster_ca_certificate
+  namespace                                      = var.namespace
+  service_account_name                           = var.service_account_name
+  email                                          = var.email
+  tenant_id                                      = data.azurerm_client_config.current.tenant_id
+  workload_managed_identity_client_id            = azurerm_user_assigned_identity.aks_workload_identity.client_id
+  certificate_manager_managed_identity_client_id = var.dns_zone_name != null && var.dns_zone_resource_group_name != null ? azurerm_user_assigned_identity.certificate_manager_identity.0.client_id : ""
+  dns_zone_name                                  = var.dns_zone_name
+  dns_zone_resource_group_name                   = var.dns_zone_resource_group_name
+  dns_zone_subscription_id                       = data.azurerm_client_config.current.subscription_id
+  nginx_replica_count                            = 3
+  kaito_enabled                                  = var.kaito_enabled
+  instance_type                                  = var.instance_type
+  grafana_id                                     = module.grafana.id
+  grafana_tags                                   = module.grafana.tags
+}
 
+module "openai" {
+  count                         = var.openai_enabled ? 1 : 0
+  source                        = "./modules/openai"
+  name                          = var.name_prefix == null ? "${random_string.prefix.result}${var.openai_name}" : "${var.name_prefix}${var.openai_name}"
+  location                      = var.location
+  resource_group_name           = azurerm_resource_group.rg.name
+  sku_name                      = var.openai_sku_name
+  tags                          = var.tags
+  deployments                   = var.openai_deployments
+  custom_subdomain_name         = var.openai_custom_subdomain_name == "" || var.openai_custom_subdomain_name == null ? var.name_prefix == null ? lower("${random_string.prefix.result}${var.openai_name}") : lower("${var.name_prefix}${var.openai_name}") : lower(var.openai_custom_subdomain_name)
+  public_network_access_enabled = var.openai_public_network_access_enabled
+  local_auth_enabled            = var.openai_local_auth_enabled
+  log_analytics_workspace_id    = module.log_analytics_workspace.id
+}
+
+module "storage_account" {
+  source                     = "./modules/storage_account"
+  name                       = "${local.storage_account_prefix}${random_string.storage_account_suffix.result}"
+  location                   = var.location
+  resource_group_name        = azurerm_resource_group.rg.name
+  account_kind               = var.storage_account_kind
+  account_tier               = var.storage_account_tier
+  replication_type           = var.storage_account_replication_type
+  shared_access_key_enabled  = var.storage_account_shared_access_key_enabled
+  ip_rules                   = var.storage_account_ip_rules
+  virtual_network_subnet_ids = var.storage_account_virtual_network_subnet_ids
+  default_action             = var.storage_account_default_action
+  bypass                     = var.storage_account_bypass
+  tags                       = var.tags
 }
 
 module "bastion_host" {
@@ -391,7 +479,7 @@ module "virtual_machine" {
   log_analytics_workspace_id          = module.log_analytics_workspace.workspace_id
   log_analytics_workspace_key         = module.log_analytics_workspace.primary_shared_key
   log_analytics_workspace_resource_id = module.log_analytics_workspace.id
-  enable_accelerated_networking       = var.vm_enable_accelerated_networking
+  accelerated_networking_enabled      = var.vm_accelerated_networking_enabled
   tags                                = var.tags
 
   depends_on = [

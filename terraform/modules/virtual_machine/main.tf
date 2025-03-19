@@ -40,11 +40,11 @@ resource "azurerm_network_security_group" "nsg" {
 }
 
 resource "azurerm_network_interface" "nic" {
-  name                          = "${var.name}Nic"
-  location                      = var.location
-  resource_group_name           = var.resource_group_name
-  enable_accelerated_networking = var.enable_accelerated_networking
-  tags                          = var.tags
+  name                           = "${var.name}Nic"
+  location                       = var.location
+  resource_group_name            = var.resource_group_name
+  accelerated_networking_enabled = var.accelerated_networking_enabled
+  tags                           = var.tags
 
   ip_configuration {
     name                          = "Configuration"
@@ -151,6 +151,7 @@ resource "azurerm_monitor_data_collection_rule" "linux" {
       facility_names = ["*"]
       log_levels     = ["*"]
       name           = "syslog"
+      streams        = ["Microsoft-Syslog"]
     }
 
     performance_counter {

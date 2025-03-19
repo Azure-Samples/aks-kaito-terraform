@@ -87,7 +87,7 @@ variable "admin_ssh_public_key" {
   type        = string
 }
 
-variable "enable_accelerated_networking" {
+variable "accelerated_networking_enabled" {
   description = "Specifies whether enable accelerated networking"
   type        = bool
   default     = true

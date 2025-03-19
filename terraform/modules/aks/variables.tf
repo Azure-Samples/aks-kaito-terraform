@@ -47,24 +47,35 @@ variable "role_based_access_control_enabled" {
   type        = bool
 }
 
-variable "automatic_channel_upgrade" {
-  description = "(Optional) The upgrade channel for this Kubernetes Cluster. Possible values are patch, rapid, and stable."
-  default     = "stable"
+variable "automatic_upgrade_channel" {
+  description = "(Optional) The upgrade channel for this Kubernetes Cluster. Possible values are patch, rapid, node-image and stable. Omitting this field sets this value to none."
+  default     = "patch"
   type        = string
 
   validation {
-    condition     = contains(["patch", "rapid", "stable"], var.automatic_channel_upgrade)
+    condition     = contains(["patch", "rapid", "stable", "node-image"], var.automatic_upgrade_channel)
+    error_message = "The upgrade mode is invalid."
+  }
+}
+
+variable "node_os_upgrade_channel" {
+  description = "(Optional) The upgrade channel for this Kubernetes Cluster Nodes' OS Image. Possible values are Unmanaged, SecurityPatch, NodeImage and None. Defaults to NodeImage."
+  default     = "NodeImage"
+  type        = string
+
+  validation {
+    condition     = contains(["Unmanaged", "SecurityPatch", "NodeImage"], var.node_os_upgrade_channel)
     error_message = "The upgrade mode is invalid."
   }
 }
 
 variable "sku_tier" {
-  description = "(Optional) The SKU Tier that should be used for this Kubernetes Cluster. Possible values are Free and Paid (which includes the Uptime SLA). Defaults to Free."
+  description = "(Optional) The SKU Tier that should be used for this Kubernetes Cluster. Possible values are Free, Standard (which includes the Uptime SLA) and Premium. Defaults to Free."
   default     = "Free"
   type        = string
 
   validation {
-    condition     = contains(["Free", "Paid"], var.sku_tier)
+    condition     = contains(["Free", "Standard", "Premium"], var.sku_tier)
     error_message = "The sku tier is invalid."
   }
 }
@@ -168,19 +179,19 @@ variable "system_node_pool_subnet_address_prefix" {
   type        = list(string)
 }
 
-variable "system_node_pool_enable_auto_scaling" {
+variable "system_node_pool_auto_scaling_enabled" {
   description = "(Optional) Whether to enable auto-scaler. Defaults to false."
   type        = bool
   default     = true
 }
 
-variable "system_node_pool_enable_host_encryption" {
+variable "system_node_pool_host_encryption_enabled" {
   description = "(Optional) Should the nodes in this Node Pool have host encryption enabled? Defaults to false."
   type        = bool
   default     = false
 }
 
-variable "system_node_pool_enable_node_public_ip" {
+variable "system_node_pool_node_public_ip_enabled" {
   description = "(Optional) Should each node have a Public IP Address? Defaults to false. Changing this forces a new resource to be created."
   type        = bool
   default     = false
@@ -343,6 +354,12 @@ variable "azure_policy_enabled" {
   default     = true
 }
 
+variable "cost_analysis_enabled" {
+  description = "(Optional) Should cost analysis be enabled for this Kubernetes Cluster? Defaults to false. The sku_tier must be set to Standard or Premium to enable this feature. Enabling this will add Kubernetes Namespace and Deployment details to the Cost Analysis views in the Azure portal."
+  type        = bool
+  default     = false
+}
+
 variable "http_application_routing_enabled" {
   description = "(Optional) Should HTTP Application Routing be enabled?"
   type        = bool
@@ -352,12 +369,26 @@ variable "http_application_routing_enabled" {
 variable "web_app_routing" {
   description = "Specifies the Application HTTP Routing addon configuration."
   type = object({
-    enabled     = bool
-    dns_zone_id = string
+    enabled      = bool
+    dns_zone_ids = list(string)
   })
   default = {
-    enabled     = false
-    dns_zone_id = null
+    enabled      = false
+    dns_zone_ids = []
+  }
+}
+
+variable "key_vault_secrets_provider" {
+  description = "Specifies the Azure Key Kault Secrets CSI Driver configuration."
+  type = object({
+    enabled                  = bool
+    secret_rotation_enabled  = bool
+    secret_rotation_interval = string
+  })
+  default = {
+    enabled                  = true
+    secret_rotation_enabled  = true
+    secret_rotation_interval = "2m"
   }
 }
 
@@ -395,4 +426,4 @@ variable "kaito_enabled" {
   description = "(Optional) Should Kaito be enabled?"
   type        = bool
   default     = false
-} 
+}

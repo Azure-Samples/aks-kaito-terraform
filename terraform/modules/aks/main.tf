@@ -19,7 +19,8 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
   kubernetes_version               = var.kubernetes_version
   dns_prefix                       = var.dns_prefix
   private_cluster_enabled          = var.private_cluster_enabled
-  automatic_channel_upgrade        = var.automatic_channel_upgrade
+  automatic_upgrade_channel        = var.automatic_upgrade_channel
+  node_os_upgrade_channel          = var.node_os_upgrade_channel
   sku_tier                         = var.sku_tier
   workload_identity_enabled        = var.workload_identity_enabled
   oidc_issuer_enabled              = var.oidc_issuer_enabled
@@ -27,6 +28,7 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
   image_cleaner_enabled            = var.image_cleaner_enabled
   image_cleaner_interval_hours     = var.image_cleaner_interval_hours
   azure_policy_enabled             = var.azure_policy_enabled
+  cost_analysis_enabled            = var.cost_analysis_enabled
   http_application_routing_enabled = var.http_application_routing_enabled
 
   default_node_pool {
@@ -38,9 +40,9 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
     orchestrator_version         = var.kubernetes_version
     node_labels                  = var.system_node_pool_node_labels
     only_critical_addons_enabled = var.system_node_pool_only_critical_addons_enabled
-    enable_auto_scaling          = var.system_node_pool_enable_auto_scaling
-    enable_host_encryption       = var.system_node_pool_enable_host_encryption
-    enable_node_public_ip        = var.system_node_pool_enable_node_public_ip
+    auto_scaling_enabled         = var.system_node_pool_auto_scaling_enabled
+    host_encryption_enabled      = var.system_node_pool_host_encryption_enabled
+    node_public_ip_enabled       = var.system_node_pool_node_public_ip_enabled
     max_pods                     = var.system_node_pool_max_pods
     max_count                    = var.system_node_pool_max_count
     min_count                    = var.system_node_pool_min_count
@@ -81,7 +83,7 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
     for_each = var.web_app_routing.enabled ? [1] : []
 
     content {
-      dns_zone_id = var.web_app_routing.dns_zone_id
+      dns_zone_ids = var.web_app_routing.dns_zone_ids
     }
   }
 
@@ -96,21 +98,24 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
   }
 
   api_server_access_profile {
-    authorized_ip_ranges     = var.authorized_ip_ranges == null ? [] : var.authorized_ip_ranges
-    subnet_id                = var.api_server_subnet_id
-    vnet_integration_enabled = var.vnet_integration_enabled
+    authorized_ip_ranges = var.authorized_ip_ranges == null ? [] : var.authorized_ip_ranges
+    # subnet_id                = var.api_server_subnet_id
+    # vnet_integration_enabled = var.vnet_integration_enabled
   }
 
   azure_active_directory_role_based_access_control {
-    managed                = true
     tenant_id              = var.tenant_id
     admin_group_object_ids = var.admin_group_object_ids
     azure_rbac_enabled     = var.azure_rbac_enabled
   }
 
-  key_vault_secrets_provider {
-    secret_rotation_enabled  = true
-    secret_rotation_interval = "2m"
+  dynamic "key_vault_secrets_provider" {
+    for_each = var.key_vault_secrets_provider.enabled ? [1] : []
+
+    content {
+      secret_rotation_enabled  = var.key_vault_secrets_provider.secret_rotation_enabled
+      secret_rotation_interval = var.key_vault_secrets_provider.secret_rotation_interval
+    }
   }
 
   workload_autoscaler_profile {
@@ -176,3 +181,4 @@ resource "azurerm_monitor_diagnostic_setting" "settings" {
     category = "AllMetrics"
   }
 }
+
